@@ -9,7 +9,7 @@ Background
 This was forked from Ondrej Faměra's Ansible [role](https://github.com/OndrejHome/ansible.ha-cluster-pacemaker) with enhacements, such as
 
 - Add fence_rhevm fencing device
-- Fix truncate for cluster password on RHEL/CentOS 7. The rest is untested
+- Fix truncate for cluster password on RHEL/CentOS 7. The rest is untested.
 - Add virtual ip configuration
 
 Installation
