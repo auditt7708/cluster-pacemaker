@@ -12,6 +12,13 @@ This was forked from Ondrej Faměra's Ansible [role](https://github.com/OndrejHo
 - Fix truncate for cluster password on RHEL/CentOS 7. The rest is untested
 - Add virtual ip configuration
 
+Installation
+------------
+
+```
+# ansible-galaxy install git+https://github.com/tsailiming/ansible.ha-cluster-pacemaker.git
+```
+
 Requirements
 ------------
 
@@ -213,14 +220,14 @@ Example playbook for creating cluster named 'test-cluster' enabled on boot, with
 
     - hosts: servers
       roles:
-         - { role: 'ondrejhome.ha-cluster-pacemaker', cluster_name: 'test-cluster' }
+         - { role: 'ansible.ha-cluster-pacemaker', cluster_name: 'test-cluster' }
 
 Example for creating cluster named 'test-cluster' without configuring firewalling and without fence_xvm.
 For cluster to get properly authorize it is expected that firewall is already configured or disabled.
 
     - hosts: servers
       roles:
-         - { role: 'ondrejhome.ha-cluster-pacemaker', cluster_name: 'test-cluster', cluster_firewall: false, cluster_configure_fence_xvm: false }
+         - { role: 'ansible.ha-cluster-pacemaker', cluster_name: 'test-cluster', cluster_firewall: false, cluster_configure_fence_xvm: false }
 
 Example playbook for creating cluster named 'vmware-cluster' with fence_vmware_soap fencing device.
 
@@ -230,7 +237,7 @@ Example playbook for creating cluster named 'vmware-cluster' with fence_vmware_s
         fence_vmware_login: 'vcenter-username'
         fence_vmware_passwd: 'vcenter-password-for-username'
       roles:
-         - { role: 'ondrejhome.ha-cluster-pacemaker', cluster_name: 'vmware-cluster', cluster_configure_fence_xvm: false, cluster_configure_fence_vmware_soap: true }
+         - { role: 'ansible.ha-cluster-pacemaker', cluster_name: 'vmware-cluster', cluster_configure_fence_xvm: false, cluster_configure_fence_vmware_soap: true }
 
 Example playbook for creating cluster named 'rhv-cluster' with fence_rhevm fencing device.
 
