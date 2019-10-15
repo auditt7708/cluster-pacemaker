@@ -20,7 +20,7 @@ cluster_enable_service: true
 # configure cluster with fence_xvm fencing device ?
 # this will copy key defined by 'fence_xvm_key' to nodes and add fencing devices to cluster
 # NOTE: you need to define 'vm_name' in the inventory for each cluster node
-cluster_configure_fence_xvm: true
+cluster_configure_fence_xvm: false
 
 # location of the fence_xvm.key file
 fence_xvm_key: '/etc/cluster/fence_xvm.key'
@@ -36,6 +36,15 @@ cluster_configure_fence_vmware_soap: false
 #fence_vmware_passwd: ''
 # by default we use encrypted configuration (ssl=1) without validating certificates (ssl_insecure=1)
 fence_vmware_options: 'ssl="1" ssl_insecure="1"'
+
+cluster_configure_fence_rhevm: false
+fence_rhevm_login: admin@internal
+fence_rhevm_ssl_insecure: 0
+fence_rhevm_ssl: 1 
+fence_rhevm_ipport: 443
+fence_rhevm_inet4_only: 1
+#fence_rhevm_options: 'power_wait=3 op monitor interval=90s'
+fence_rhevm_options: ''
 
 # custom fence device configuration variable which allows you to define your own fence devices
 # for proper options check examples below

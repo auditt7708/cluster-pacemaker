@@ -1,0 +1,79 @@
+# https://gist.github.com/jclaret/52bbc8a1f4f04b099712b0044a809587
+---
+- name: Check if 'vm_name' variable is defined for each node
+  fail:
+    msg: "'vm_name' must be defined for each node and contain name or UUID of VM as seen by hypervisor."
+  when: vm_name is not defined
+
+- name: Check if 'fence_rhevm_ipaddr' variable is defined
+  fail:
+    msg: "'fence_rhevm_ipaddr' variable has to be defined and contain 'hostname' or 'IP address' of vCenter/hypervisor"
+  when: fence_rhevm_ipaddr is not defined
+
+- name: Check if 'fence_rhevm_login' variable is defined
+  fail:
+    msg: "'fence_rhevm_login' variable has to be defined and contain username to RHEV Manager"
+  when: fence_rhevm_login is not defined
+
+- name: Check if 'fence_rhevm_passwd' variable is defined
+  fail:
+    msg: "'fence_rhevm_passwd' variable has to be defined and contain password for user {{ fence_rhevm_login }}"
+  when: fence_rhevm_passwd is not defined
+
+- name: Install fence-agents-rhevm fencing agent on both nodes
+  yum:
+    name: 'fence-agents-rhevm'
+    state: 'installed'
+
+- set_fact:
+    pcmk_host_map: "{{ pcmk_host_map | default([]) + [ hostvars[item]['ansible_fqdn'].split('.')[0] + ':' + hostvars[item]['vm_name'] ] }}"
+  with_items: "{{ play_hosts }}"
+  run_once: true
+  delegate_to: localhost
+
+- debug:
+    var: pcmk_host_map
+  run_once: true
+  delegate_to: localhost
+
+- set_fact:
+    pcmk_host_list: "{{ pcmk_host_list | default([]) + [ hostvars[item]['ansible_fqdn'].split('.')[0] ] }}"
+  with_items: "{{ play_hosts }}"
+  run_once: true
+  delegate_to: localhost
+
+- debug:
+    var: pcmk_host_list
+  run_once: true
+  delegate_to: localhost
+
+# Disable http-filter because of https://access.redhat.com/solutions/3093891
+- set_fact:
+    fence_rhvm_cmdline: "fence_rhevm -o status {{ '--ssl' if fence_rhevm_ssl else '' }} {{ '--ssl-insecure' if fence_rhevm_ssl_insecure else '--ssl-secure' }}  -a {{fence_rhevm_ipaddr}} --username={{fence_rhevm_login}} --password={{fence_rhevm_passwd}} --ipport={{fence_rhevm_ipport}}  -n {{ansible_fqdn.split('.')[0]}} --disable-http-filter"
+
+#- debug:
+#    var: fence_rhvm_cmdline
+
+- name: Test fencing
+  command: "{{ fence_rhvm_cmdline }}"
+
+- name: create fence_rhevm STONITH devices
+  pcs_resource:
+    name: "fence-rhevm"
+    resource_class: 'stonith'
+    resource_type: 'fence_rhevm'
+    options: >-
+      pcmk_host_map={{pcmk_host_map | join(',') }}
+      pcmk_host_list={{pcmk_host_list | join(',') }}
+      ipaddr={{ fence_rhevm_ipaddr }}
+      ipport={{ fence_rhevm_ipport }} 
+      login={{ fence_rhevm_login }}
+      passwd={{ fence_rhevm_passwd }}
+      ssl_insecure={{ fence_rhevm_ssl_insecure }}
+      ssl={{ fence_rhevm_ssl }}
+      inet4_only={{ fence_rhevm_inet4_only}}
+      disable_http_filter=1
+      {{ fence_rhevm_options }}
+  run_once: true
+
+
