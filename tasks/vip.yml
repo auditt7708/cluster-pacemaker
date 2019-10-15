@@ -1,0 +1,14 @@
+---
+# tasks file for ansible-ha-cluster-vip
+# pcs resource create www_vip IPaddr2 ip=192.168.122.15 --group webapp
+
+- name: create virtual ip
+  pcs_resource:
+    name: "{{ item.name }}"
+    resource_class: 'ocf'
+    resource_type: 'IPaddr2'
+    options: >-
+      ip="{{item.ipaddr}}"
+      --group="{{item.resource_group}}"
+  run_once: true
+  with_items: "{{ vips }}"

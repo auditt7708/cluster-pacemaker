@@ -136,3 +136,6 @@
 
 - name: Setup custom fence devices
   include_tasks: fence_custom.yml
+
+### Configure VIP
+- include_tasks: vip.yml
