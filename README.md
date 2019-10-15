@@ -1,7 +1,16 @@
+
 ha-cluster-pacemaker
 =========
 
 Role for configuring and expanding basic pacemaker cluster on CentOS/RHEL 6/7, RHEL 8 and Fedora 28/29/30 systems.
+
+Background
+------------
+This was forked from Ondrej Faměra's Ansible [role](https://github.com/OndrejHome/ansible.ha-cluster-pacemaker) with enhacements, such as
+
+- Add fence_rhevm fencing device
+- Fix truncate for cluster password on RHEL/CentOS 7. The rest is untested
+- Add virtual ip configuration
 
 Requirements
 ------------
@@ -88,6 +97,42 @@ Role Variables
     cluster_configure_fence_kdump: false
     ```
 
+  - configure cluster with fence_rhevm fencing device ?
+    This will install `fence_rhvm` agent.
+    NOTE: You also need to define 'vm_name' in the inventory for each cluster node specifying the name as seen on the hypervisor, without a comma at the end.
+
+    For example:
+
+    ```
+    # fence_rhevm -o list \
+    --ssl \
+    --ssl-insecure \
+    -a <rhvm_host> \
+    --username=admin@internal \
+    --password=<password> \
+    --ipport=443 \
+    --disable-http-filter
+    cluster1,
+    cluster2,
+    ```
+
+    ```
+    cluster_configure_fence_rhevm: true
+    fence_rhevm_ipaddr: 'rhevm_hostname'
+    fence_rhevm_passwd: 'rhevm_password'
+    fence_rhevm_login: 'rhevm_user'
+    fence_rhevm_ssl_insecure: 1 # Enable/disable certification check
+    fence_rhevm_ssl: 1 # Use SSL
+    fence_rhevm_inet4_only: 1 # Use ipv4
+    ```
+
+    You can optionally add additional attributes passed to fence_rhevm using the variable `fence_rhevm_options`.
+
+    ```
+    fence_rhevm_options: power_wait=3 op monitor interval=90s
+    ```
+
+
   - (RHEL only) enable the repositories containint packages needed
     ```
     enable_repos: true
@@ -153,6 +198,14 @@ Role Variables
     cluster_net_iface: ''
     ```
 
+  - Create IPAddr2 resource
+    ```
+    vips:
+      - name: www_vip
+        ipaddr: 192.168.0.171
+        resource_group: webapp
+    ```
+
 Example Playbook
 ----------------
 
@@ -178,6 +231,20 @@ Example playbook for creating cluster named 'vmware-cluster' with fence_vmware_s
         fence_vmware_passwd: 'vcenter-password-for-username'
       roles:
          - { role: 'ondrejhome.ha-cluster-pacemaker', cluster_name: 'vmware-cluster', cluster_configure_fence_xvm: false, cluster_configure_fence_vmware_soap: true }
+
+Example playbook for creating cluster named 'rhv-cluster' with fence_rhevm fencing device.
+
+    - hosts: servers
+      vars:
+        cluster_configure_fence_rhevm: true
+        fence_rhevm_ipaddr: 'rhevm_hostname'
+        fence_rhevm_passwd: 'rhevm_password'
+        fence_rhevm_login: 'rhevm_user'
+        fence_rhevm_ssl_insecure: 1 
+        fence_rhevm_ssl: 1 
+        fence_rhevm_inet4_only: 1
+      roles:
+         - { role: 'ansible.ha-cluster-pacemaker', cluster_name: 'rhv-cluster' }
 
 Inventory file example for CentOS/RHEL and Fedora systems.
 
@@ -206,4 +273,3 @@ Author Information
 WARNING: this is alpha-version quality proof-of concept role that still needs some polishing and is using custom modules 
          to interact with pacemaker through python. This is suitable for testing purposes only.
 
-To get in touch with author you can use email ondrej-xa2iel8u@famera.cz or create a issue on github when requesting some feature.
